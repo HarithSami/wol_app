@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WoLow - Wake on LAN</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px 20px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .main-container {
+            padding: 20px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .power-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 30px;
+            padding: 40px 20px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+        }
+
+        .power-button {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-size: 48px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            position: relative;
+        }
+
+        .power-button::before {
+            content: "";
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            border: 4px solid white;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .power-button::after {
+            content: "";
+            position: absolute;
+            width: 4px;
+            height: 20px;
+            background: white;
+            top: 32px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+
+        .power-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+        }
+
+        .power-button:active {
+            transform: translateY(-1px);
+        }
+
+        .power-button.sending {
+            background: linear-gradient(135deg, #ff9a9e, #fecfef);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .device-info {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .device-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .device-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .device-icon {
+            font-size: 24px;
+            color: #667eea;
+        }
+
+        .status-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .status-label {
+            color: #666;
+        }
+
+        .status-value {
+            font-weight: 600;
+            color: #4CAF50;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: space-around;
+            gap: 10px;
+        }
+
+        .action-btn {
+            flex: 1;
+            background: none;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 15px 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .action-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .action-btn.wake {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-color: transparent;
+        }
+
+        .devices-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .add-device-btn {
+            background: none;
+            border: none;
+            color: #667eea;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .device-list {
+            list-style: none;
+        }
+
+        .device-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .device-item:last-child {
+            border-bottom: none;
+        }
+
+        .device-details h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .device-details p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .edit-btn {
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .notification {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 14px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .notification.show {
+            opacity: 1;
+        }
+
+        .notification.success {
+            background: rgba(76, 175, 80, 0.9);
+        }
+
+        .notification.error {
+            background: rgba(244, 67, 54, 0.9);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 50px auto;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #666;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        @media (max-width: 480px) {
+            .main-container {
+                padding: 15px;
+            }
+            
+            .power-button {
+                width: 100px;
+                height: 100px;
+                font-size: 40px;
+            }
+            
+            .device-info {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>WoLow</h1>
+    </div>
+
+    <div class="main-container">
+        <div class="power-section">
+            <button class="power-button" id="powerBtn" onclick="wakeSelectedDevice()"></button>
+            <h2 id="selectedDeviceName">HARITH_PC</h2>
+        </div>
+
+        <div class="device-info">
+            <div class="device-header">
+                <div>
+                    <div class="device-icon">💻</div>
+                    <div class="device-name" id="deviceName">HARITH_PC</div>
+                </div>
+                <button class="edit-btn" onclick="openEditModal('HARITH_PC')">✏️</button>
+            </div>
+            
+            <div class="status-row">
+                <span class="status-label">Awake Status</span>
+                <span class="status-value" id="deviceStatus">Ready</span>
+            </div>
+
+            <div class="action-buttons">
+                <button class="action-btn">Shutdown</button>
+                <button class="action-btn">Reboot</button>
+                <button class="action-btn wake" onclick="wakeSelectedDevice()">Wake</button>
+            </div>
+        </div>
+
+        <div class="devices-section">
+            <div class="section-header">
+                <span class="section-title">Select Device</span>
+                <button class="add-device-btn" onclick="openAddModal()">Add new device</button>
+            </div>
+            
+            <ul class="device-list" id="deviceList">
+                <li class="device-item">
+                    <div class="device-details">
+                        <h3>HARITH_PC</h3>
+                        <p>192.168.0.18</p>
+                    </div>
+                    <button class="edit-btn" onclick="openEditModal('HARITH_PC')">✏️</button>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <!-- Add Device Modal -->
+    <div class="modal" id="addModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Add New Device</h2>
+                <button class="close-btn" onclick="closeModal('addModal')">&times;</button>
+            </div>
+            <form id="addDeviceForm">
+                <div class="form-group">
+                    <label class="form-label">Device Name</label>
+                    <input type="text" class="form-input" id="addDeviceName" placeholder="My PC" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">MAC Address</label>
+                    <input type="text" class="form-input" id="addMacAddress" placeholder="AA:BB:CC:DD:EE:FF" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">IP Address</label>
+                    <input type="text" class="form-input" id="addIpAddress" placeholder="192.168.1.100" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Port</label>
+                    <input type="number" class="form-input" id="addPort" placeholder="9" value="9" required>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Device</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Device Modal -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Edit Device</h2>
+                <button class="close-btn" onclick="closeModal('editModal')">&times;</button>
+            </div>
+            <form id="editDeviceForm">
+                <div class="form-group">
+                    <label class="form-label">Device Name</label>
+                    <input type="text" class="form-input" id="editDeviceName" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">MAC Address</label>
+                    <input type="text" class="form-input" id="editMacAddress" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">IP Address</label>
+                    <input type="text" class="form-input" id="editIpAddress" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Port</label>
+                    <input type="number" class="form-input" id="editPort" required>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('editModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Default device configuration
+        const devices = {
+            "HARITH_PC": {
+                mac: "DE:5E:D3:93:DF:F5",
+                ip: "192.168.0.18",
+                port: 9,
+                subnet: "255.255.255.0"
+            }
+        };
+
+        let selectedDevice = "HARITH_PC";
+        let editingDevice = null;
+
+        function openAddModal() {
+            document.getElementById('addModal').style.display = 'block';
+        }
+
+        function openEditModal(deviceName) {
+            editingDevice = deviceName;
+            const device = devices[deviceName];
+            
+            document.getElementById('editDeviceName').value = deviceName;
+            document.getElementById('editMacAddress').value = device.mac;
+            document.getElementById('editIpAddress').value = device.ip;
+            document.getElementById('editPort').value = device.port;
+            
+            document.getElementById('editModal').style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+            editingDevice = null;
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const addModal = document.getElementById('addModal');
+            const editModal = document.getElementById('editModal');
+            
+            if (event.target === addModal) {
+                closeModal('addModal');
+            }
+            if (event.target === editModal) {
+                closeModal('editModal');
+            }
+        }
+
+        function updateDeviceList() {
+            const deviceList = document.getElementById('deviceList');
+            deviceList.innerHTML = '';
+            
+            Object.keys(devices).forEach(deviceName => {
+                const device = devices[deviceName];
+                const li = document.createElement('li');
+                li.className = 'device-item';
+                li.innerHTML = `
+                    <div class="device-details">
+                        <h3>${deviceName}</h3>
+                        <p>${device.ip}</p>
+                    </div>
+                    <button class="edit-btn" onclick="openEditModal('${deviceName.replace(/'/g, '\\\'')}')" style="pointer-events: auto;">✏️</button>
+                `;
+                
+                li.addEventListener('click', function(e) {
+                    if (e.target.classList.contains('edit-btn')) {
+                        e.stopPropagation();
+                        return;
+                    }
+                    
+                    // Remove active class from all items
+                    document.querySelectorAll('.device-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    
+                    // Add active class to clicked item
+                    this.classList.add('active');
+                    
+                    // Update selected device
+                    selectedDevice = deviceName;
+                    document.getElementById('selectedDeviceName').textContent = deviceName;
+                    document.getElementById('deviceName').textContent = deviceName;
+                });
+                
+                deviceList.appendChild(li);
+            });
+        }
+
+        // Handle add device form
+        document.getElementById('addDeviceForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('addDeviceName').value.trim();
+            const mac = document.getElementById('addMacAddress').value.trim();
+            const ip = document.getElementById('addIpAddress').value.trim();
+            const port = parseInt(document.getElementById('addPort').value);
+            
+            // Validate inputs
+            if (!name || !mac || !ip || !port) {
+                showNotification('Please fill in all fields', 'error');
+                return;
+            }
+            
+            // Validate MAC address format
+            const macRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
+            if (!macRegex.test(mac)) {
+                showNotification('Invalid MAC address format (use XX:XX:XX:XX:XX:XX)', 'error');
+                return;
+            }
+            
+            // Validate IP address format
+            const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+            if (!ipRegex.test(ip)) {
+                showNotification('Invalid IP address format', 'error');
+                return;
+            }
+            
+            // Check if device name already exists
+            if (devices[name]) {
+                showNotification('Device name already exists', 'error');
+                return;
+            }
+            
+            // Add device
+            devices[name] = { mac, ip, port, subnet: "255.255.255.0" };
+            updateDeviceList();
+            closeModal('addModal');
+            
+            // Clear form
+            this.reset();
+            document.getElementById('addPort').value = '9';
+            
+            showNotification(`Device "${name}" added successfully`, 'success');
+        });
+
+        // Handle edit device form
+        document.getElementById('editDeviceForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('editDeviceName').value.trim();
+            const mac = document.getElementById('editMacAddress').value.trim();
+            const ip = document.getElementById('editIpAddress').value.trim();
+            const port = parseInt(document.getElementById('editPort').value);
+            
+            // Validate inputs
+            if (!name || !mac || !ip || !port) {
+                showNotification('Please fill in all fields', 'error');
+                return;
+            }
+            
+            // Validate MAC address format
+            const macRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
+            if (!macRegex.test(mac)) {
+                showNotification('Invalid MAC address format (use XX:XX:XX:XX:XX:XX)', 'error');
+                return;
+            }
+            
+            // Validate IP address format
+            const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+            if (!ipRegex.test(ip)) {
+                showNotification('Invalid IP address format', 'error');
+                return;
+            }
+            
+            // Remove old device if name changed
+            if (editingDevice && editingDevice !== name) {
+                delete devices[editingDevice];
+                if (selectedDevice === editingDevice) {
+                    selectedDevice = name;
+                    document.getElementById('selectedDeviceName').textContent = name;
+                    document.getElementById('deviceName').textContent = name;
+                }
+            }
+            
+            // Update device
+            devices[name] = { mac, ip, port, subnet: "255.255.255.0" };
+            updateDeviceList();
+            closeModal('editModal');
+            
+            showNotification(`Device "${name}" updated successfully`, 'success');
+        });
+
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type} show`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        async function wakeSelectedDevice() {
+            const powerBtn = document.getElementById('powerBtn');
+            const statusElement = document.getElementById('deviceStatus');
+            
+            if (!devices[selectedDevice]) {
+                showNotification('Device not found!', 'error');
+                return;
+            }
+
+            powerBtn.classList.add('sending');
+            powerBtn.disabled = true;
+            statusElement.textContent = 'Sending...';
+
+            try {
+                const response = await fetch('/wake', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        device_name: selectedDevice,
+                        mac: devices[selectedDevice].mac,
+                        ip: devices[selectedDevice].ip,
+                        port: devices[selectedDevice].port
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showNotification(`Wake packet sent to ${selectedDevice}!`, 'success');
+                    statusElement.textContent = 'Wake packet sent';
+                } else {
+                    showNotification(result.error || 'Failed to send wake packet', 'error');
+                    statusElement.textContent = 'Ready';
+                }
+            } catch (error) {
+                showNotification('Network error: ' + error.message, 'error');
+                statusElement.textContent = 'Ready';
+            }
+
+            setTimeout(() => {
+                powerBtn.classList.remove('sending');
+                powerBtn.disabled = false;
+                statusElement.textContent = 'Ready';
+            }, 2000);
+        }
+
+        // Add some interactivity to device selection
+        document.addEventListener('DOMContentLoaded', function() {
+            const deviceItems = document.querySelectorAll('.device-item');
+            
+            deviceItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    // Remove active class from all items
+                    deviceItems.forEach(i => i.classList.remove('active'));
+                    // Add active class to clicked item
+                    this.classList.add('active');
+                    
+                    // Update selected device (in a real app, you'd get this from the item data)
+                    const deviceName = this.querySelector('h3').textContent;
+                    selectedDevice = deviceName;
+                    document.getElementById('selectedDeviceName').textContent = deviceName;
+                    document.getElementById('deviceName').textContent = deviceName;
+                });
+            });
+        });
+    </script>
+</body>
+</html>
