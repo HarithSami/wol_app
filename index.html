@@ -99,6 +99,11 @@
             transform: translateY(-1px);
         }
 
+        .power-button:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
         .power-button.sending {
             background: linear-gradient(135deg, #ff9a9e, #fecfef);
             animation: pulse 1.5s infinite;
@@ -134,6 +139,7 @@
         .device-icon {
             font-size: 24px;
             color: #667eea;
+            margin-bottom: 10px;
         }
 
         .status-row {
@@ -152,33 +158,32 @@
             color: #4CAF50;
         }
 
-        .action-buttons {
+        .wake-button-container {
             display: flex;
-            justify-content: space-around;
-            gap: 10px;
+            justify-content: center;
         }
 
-        .action-btn {
-            flex: 1;
-            background: none;
-            border: 2px solid #e0e0e0;
-            border-radius: 15px;
-            padding: 15px 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            color: #666;
-            font-size: 14px;
-        }
-
-        .action-btn:hover {
-            border-color: #667eea;
-            color: #667eea;
-        }
-
-        .action-btn.wake {
+        .wake-btn {
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
-            border-color: transparent;
+            border: none;
+            border-radius: 15px;
+            padding: 15px 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            font-weight: 500;
+            min-width: 120px;
+        }
+
+        .wake-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .wake-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
         }
 
         .devices-section {
@@ -202,11 +207,19 @@
         }
 
         .add-device-btn {
-            background: none;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
             border: none;
-            color: #667eea;
+            border-radius: 10px;
+            padding: 8px 16px;
             font-size: 14px;
             cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .add-device-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
         }
 
         .device-list {
@@ -219,10 +232,28 @@
             justify-content: space-between;
             padding: 15px 0;
             border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
 
         .device-item:last-child {
             border-bottom: none;
+        }
+
+        .device-item:hover {
+            background: rgba(102, 126, 234, 0.05);
+            margin: 0 -20px;
+            padding-left: 20px;
+            padding-right: 20px;
+            border-radius: 10px;
+        }
+
+        .device-item.active {
+            background: rgba(102, 126, 234, 0.1);
+            margin: 0 -20px;
+            padding-left: 20px;
+            padding-right: 20px;
+            border-radius: 10px;
         }
 
         .device-details h3 {
@@ -242,6 +273,14 @@
             color: #666;
             font-size: 18px;
             cursor: pointer;
+            padding: 5px;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .edit-btn:hover {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
         }
 
         .notification {
@@ -257,6 +296,8 @@
             z-index: 1000;
             opacity: 0;
             transition: opacity 0.3s ease;
+            max-width: 90%;
+            text-align: center;
         }
 
         .notification.show {
@@ -292,6 +333,8 @@
             max-width: 400px;
             position: relative;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-height: 80vh;
+            overflow-y: auto;
         }
 
         .modal-header {
@@ -319,6 +362,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(0, 0, 0, 0.1);
+            color: #333;
         }
 
         .form-group {
@@ -339,11 +389,15 @@
             border-radius: 10px;
             font-size: 16px;
             transition: border-color 0.3s ease;
+            outline: none;
         }
 
         .form-input:focus {
-            outline: none;
             border-color: #667eea;
+        }
+
+        .form-input::placeholder {
+            color: #999;
         }
 
         .modal-buttons {
@@ -382,6 +436,16 @@
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
         }
 
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+        }
+
         @media (max-width: 480px) {
             .main-container {
                 padding: 15px;
@@ -396,6 +460,12 @@
             .device-info {
                 padding: 15px;
             }
+
+            .modal-content {
+                margin: 20px auto;
+                padding: 20px;
+                width: 95%;
+            }
         }
     </style>
 </head>
@@ -407,43 +477,37 @@
     <div class="main-container">
         <div class="power-section">
             <button class="power-button" id="powerBtn" onclick="wakeSelectedDevice()"></button>
-            <h2 id="selectedDeviceName">HARITH_PC</h2>
+            <h2 id="selectedDeviceName">No Devices</h2>
         </div>
 
         <div class="device-info">
             <div class="device-header">
                 <div>
                     <div class="device-icon">💻</div>
-                    <div class="device-name" id="deviceName">HARITH_PC</div>
+                    <div class="device-name" id="deviceName">No Devices</div>
                 </div>
-                <button class="edit-btn" onclick="openEditModal('HARITH_PC')">✏️</button>
+                <button class="edit-btn" onclick="openEditModal(selectedDevice)" title="Edit Device" id="editBtn" style="display: none;">✏️</button>
             </div>
             
             <div class="status-row">
-                <span class="status-label">Awake Status</span>
+                <span class="status-label">Status</span>
                 <span class="status-value" id="deviceStatus">Ready</span>
             </div>
 
-            <div class="action-buttons">
-                <button class="action-btn">Shutdown</button>
-                <button class="action-btn">Reboot</button>
-                <button class="action-btn wake" onclick="wakeSelectedDevice()">Wake</button>
+            <div class="wake-button-container">
+                <button class="wake-btn" onclick="wakeSelectedDevice()" id="wakeBtn">Wake Device</button>
             </div>
         </div>
 
         <div class="devices-section">
             <div class="section-header">
                 <span class="section-title">Select Device</span>
-                <button class="add-device-btn" onclick="openAddModal()">Add new device</button>
+                <button class="add-device-btn" onclick="openAddModal()">+ Add Device</button>
             </div>
             
             <ul class="device-list" id="deviceList">
-                <li class="device-item">
-                    <div class="device-details">
-                        <h3>HARITH_PC</h3>
-                        <p>192.168.0.18</p>
-                    </div>
-                    <button class="edit-btn" onclick="openEditModal('HARITH_PC')">✏️</button>
+                <li class="device-item" style="text-align: center; color: #999;">
+                    <p>Loading devices...</p>
                 </li>
             </ul>
         </div>
@@ -508,6 +572,7 @@
                     <input type="number" class="form-input" id="editPort" required>
                 </div>
                 <div class="modal-buttons">
+                    <button type="button" class="btn btn-danger" onclick="deleteDevice()" id="deleteBtn">Delete Device</button>
                     <button type="button" class="btn btn-secondary" onclick="closeModal('editModal')">Cancel</button>
                     <button type="submit" class="btn btn-primary">Save Changes</button>
                 </div>
@@ -516,10 +581,9 @@
     </div>
 
     <script>
-    <script>
         // Device configuration - loaded from server
         let devices = {};
-        let selectedDevice = "HARITH_PC";
+        let selectedDevice = '';
         let editingDevice = null;
 
         // Load devices from server on startup
@@ -528,23 +592,92 @@
                 const response = await fetch('/devices');
                 if (response.ok) {
                     devices = await response.json();
+                    console.log('Loaded devices:', devices);
                     
-                    // Set first device as selected if HARITH_PC doesn't exist
+                    // Set first device as selected if no device is currently selected
                     const deviceNames = Object.keys(devices);
                     if (deviceNames.length > 0) {
-                        if (!devices[selectedDevice]) {
+                        if (!selectedDevice || !devices[selectedDevice]) {
                             selectedDevice = deviceNames[0];
+                            document.getElementById('selectedDeviceName').textContent = selectedDevice;
+                            document.getElementById('deviceName').textContent = selectedDevice;
                         }
-                        document.getElementById('selectedDeviceName').textContent = selectedDevice;
-                        document.getElementById('deviceName').textContent = selectedDevice;
+                    } else {
+                        // No devices available
+                        selectedDevice = '';
+                        document.getElementById('selectedDeviceName').textContent = 'No Devices';
+                        document.getElementById('deviceName').textContent = 'No Devices';
                     }
                     
                     updateDeviceList();
                 } else {
+                    console.error('Failed to load devices:', response.status, response.statusText);
                     showNotification('Failed to load devices from server', 'error');
+                    // Initialize with empty devices
+                    devices = {};
+                    selectedDevice = '';
+                    updateDeviceList();
                 }
             } catch (error) {
+                console.error('Error connecting to server:', error);
                 showNotification('Error connecting to server: ' + error.message, 'error');
+                // Initialize with empty devices
+                devices = {};
+                selectedDevice = '';
+                updateDeviceList();
+            }
+        }
+
+        // Wake selected device
+        async function wakeSelectedDevice() {
+            if (!selectedDevice || !devices[selectedDevice]) {
+                showNotification('No device selected', 'error');
+                return;
+            }
+
+            const powerBtn = document.getElementById('powerBtn');
+            const wakeBtn = document.getElementById('wakeBtn');
+            
+            // Disable buttons and show sending state
+            powerBtn.disabled = true;
+            wakeBtn.disabled = true;
+            powerBtn.classList.add('sending');
+            document.getElementById('deviceStatus').textContent = 'Sending...';
+
+            try {
+                const response = await fetch('/wake', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        device_name: selectedDevice
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    showNotification(result.message, 'success');
+                    document.getElementById('deviceStatus').textContent = 'Packet Sent';
+                } else {
+                    showNotification(result.error || 'Failed to wake device', 'error');
+                    document.getElementById('deviceStatus').textContent = 'Error';
+                }
+            } catch (error) {
+                console.error('Error waking device:', error);
+                showNotification('Network error: ' + error.message, 'error');
+                document.getElementById('deviceStatus').textContent = 'Error';
+            } finally {
+                // Re-enable buttons and remove sending state
+                powerBtn.disabled = false;
+                wakeBtn.disabled = false;
+                powerBtn.classList.remove('sending');
+                
+                // Reset status after a delay
+                setTimeout(() => {
+                    document.getElementById('deviceStatus').textContent = 'Ready';
+                }, 2000);
             }
         }
 
@@ -580,15 +713,46 @@
                 return { success: false, message: 'Network error: ' + error.message };
             }
         }
-        let editingDevice = null;
+
+        // Delete device from server
+        async function deleteDeviceFromServer(deviceName) {
+            try {
+                const response = await fetch(`/devices/${encodeURIComponent(deviceName)}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    // Reload devices from server
+                    await loadDevices();
+                    return { success: true, message: result.message };
+                } else {
+                    return { success: false, message: result.error || 'Failed to delete device' };
+                }
+            } catch (error) {
+                return { success: false, message: 'Network error: ' + error.message };
+            }
+        }
 
         function openAddModal() {
+            // Clear form
+            document.getElementById('addDeviceForm').reset();
+            document.getElementById('addPort').value = '9';
             document.getElementById('addModal').style.display = 'block';
         }
 
         function openEditModal(deviceName) {
             editingDevice = deviceName;
             const device = devices[deviceName];
+            
+            if (!device) {
+                showNotification('Device not found', 'error');
+                return;
+            }
             
             document.getElementById('editDeviceName').value = deviceName;
             document.getElementById('editMacAddress').value = device.mac;
@@ -618,23 +782,49 @@
 
         function updateDeviceList() {
             const deviceList = document.getElementById('deviceList');
+            const deviceNames = Object.keys(devices);
+            const editBtn = document.getElementById('editBtn');
+            
             deviceList.innerHTML = '';
             
-            Object.keys(devices).forEach(deviceName => {
+            if (deviceNames.length === 0) {
+                // Show empty state
+                const li = document.createElement('li');
+                li.className = 'device-item';
+                li.style.textAlign = 'center';
+                li.style.color = '#999';
+                li.innerHTML = '<p>No devices configured. Click "Add Device" to get started.</p>';
+                deviceList.appendChild(li);
+                
+                // Update UI to show no devices
+                document.getElementById('selectedDeviceName').textContent = 'No Devices';
+                document.getElementById('deviceName').textContent = 'No Devices';
+                selectedDevice = '';
+                if (editBtn) editBtn.style.display = 'none';
+                return;
+            }
+            
+            // Show edit button when devices are available
+            if (editBtn) editBtn.style.display = 'block';
+            
+            deviceNames.forEach(deviceName => {
                 const device = devices[deviceName];
                 const li = document.createElement('li');
                 li.className = 'device-item';
+                if (deviceName === selectedDevice) {
+                    li.classList.add('active');
+                }
+                
                 li.innerHTML = `
                     <div class="device-details">
                         <h3>${deviceName}</h3>
                         <p>${device.ip}</p>
                     </div>
-                    <button class="edit-btn" onclick="openEditModal('${deviceName.replace(/'/g, '\\\'')}')" style="pointer-events: auto;">✏️</button>
+                    <button class="edit-btn" onclick="event.stopPropagation(); openEditModal('${deviceName.replace(/'/g, '\\\'')}')" title="Edit Device">✏️</button>
                 `;
                 
                 li.addEventListener('click', function(e) {
                     if (e.target.classList.contains('edit-btn')) {
-                        e.stopPropagation();
                         return;
                     }
                     
@@ -661,7 +851,7 @@
             e.preventDefault();
             
             const name = document.getElementById('addDeviceName').value.trim();
-            const mac = document.getElementById('addMacAddress').value.trim();
+            const mac = document.getElementById('addMacAddress').value.trim().toUpperCase();
             const ip = document.getElementById('addIpAddress').value.trim();
             const port = parseInt(document.getElementById('addPort').value);
             
@@ -685,60 +875,15 @@
                 return;
             }
             
-            // Check if device name already exists
-            if (devices[name]) {
+            // Validate port range
+            if (port < 1 || port > 65535) {
+                showNotification('Port must be between 1 and 65535', 'error');
+                return;
+            }
+            
+            // Check if device name already exists (but not if it's the same device)
+            if (devices[name] && name !== editingDevice) {
                 showNotification('Device name already exists', 'error');
-                return;
-            }
-            
-            // Save device to server
-            const result = await saveDeviceToServer({
-                name: name,
-                mac: mac,
-                ip: ip,
-                port: port,
-                subnet: "255.255.255.0"
-            });
-            
-            if (result.success) {
-                closeModal('addModal');
-                
-                // Clear form
-                this.reset();
-                document.getElementById('addPort').value = '9';
-                
-                showNotification(result.message, 'success');
-            } else {
-                showNotification(result.message, 'error');
-            }
-        });
-
-        // Handle edit device form
-        document.getElementById('editDeviceForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const name = document.getElementById('editDeviceName').value.trim();
-            const mac = document.getElementById('editMacAddress').value.trim();
-            const ip = document.getElementById('editIpAddress').value.trim();
-            const port = parseInt(document.getElementById('editPort').value);
-            
-            // Validate inputs
-            if (!name || !mac || !ip || !port) {
-                showNotification('Please fill in all fields', 'error');
-                return;
-            }
-            
-            // Validate MAC address format
-            const macRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
-            if (!macRegex.test(mac)) {
-                showNotification('Invalid MAC address format (use XX:XX:XX:XX:XX:XX)', 'error');
-                return;
-            }
-            
-            // Validate IP address format
-            const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
-            if (!ipRegex.test(ip)) {
-                showNotification('Invalid IP address format', 'error');
                 return;
             }
             
@@ -766,6 +911,41 @@
             }
         });
 
+        // Handle device deletion
+        async function deleteDevice() {
+            if (!editingDevice) {
+                showNotification('No device selected for deletion', 'error');
+                return;
+            }
+            
+            if (!confirm(`Are you sure you want to delete "${editingDevice}"?`)) {
+                return;
+            }
+            
+            const result = await deleteDeviceFromServer(editingDevice);
+            
+            if (result.success) {
+                // If the deleted device was selected, select the first available device
+                if (selectedDevice === editingDevice) {
+                    const remainingDevices = Object.keys(devices).filter(name => name !== editingDevice);
+                    if (remainingDevices.length > 0) {
+                        selectedDevice = remainingDevices[0];
+                        document.getElementById('selectedDeviceName').textContent = selectedDevice;
+                        document.getElementById('deviceName').textContent = selectedDevice;
+                    } else {
+                        selectedDevice = '';
+                        document.getElementById('selectedDeviceName').textContent = 'No Devices';
+                        document.getElementById('deviceName').textContent = 'No Devices';
+                    }
+                }
+                
+                closeModal('editModal');
+                showNotification(result.message, 'success');
+            } else {
+                showNotification(result.message, 'error');
+            }
+        }
+
         function showNotification(message, type = 'info') {
             const notification = document.getElementById('notification');
             notification.textContent = message;
@@ -776,59 +956,11 @@
             }, 3000);
         }
 
-        async function wakeSelectedDevice() {
-            const powerBtn = document.getElementById('powerBtn');
-            const statusElement = document.getElementById('deviceStatus');
-            
-            if (!devices[selectedDevice]) {
-                showNotification('Device not found!', 'error');
-                return;
-            }
-
-            powerBtn.classList.add('sending');
-            powerBtn.disabled = true;
-            statusElement.textContent = 'Sending...';
-
-            try {
-                const response = await fetch('/wake', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        device_name: selectedDevice,
-                        mac: devices[selectedDevice].mac,
-                        ip: devices[selectedDevice].ip,
-                        port: devices[selectedDevice].port
-                    })
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    showNotification(`Wake packet sent to ${selectedDevice}!`, 'success');
-                    statusElement.textContent = 'Wake packet sent';
-                } else {
-                    showNotification(result.error || 'Failed to send wake packet', 'error');
-                    statusElement.textContent = 'Ready';
-                }
-            } catch (error) {
-                showNotification('Network error: ' + error.message, 'error');
-                statusElement.textContent = 'Ready';
-            }
-
-            setTimeout(() => {
-                powerBtn.classList.remove('sending');
-                powerBtn.disabled = false;
-                statusElement.textContent = 'Ready';
-            }, 2000);
-        }
-
-        // Add some interactivity to device selection
+        // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
-            // Load devices from server when page loads
+            console.log('DOM loaded, initializing app...');
             loadDevices();
         });
     </script>
 </body>
-</html>
+</html> 
