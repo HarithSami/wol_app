@@ -4,8 +4,69 @@ from flask import Flask, request, jsonify, render_template_string
 import socket
 import struct
 import os
+import yaml
+from pathlib import Path
 
 app = Flask(__name__)
+
+# Configuration
+CONFIG_FILE = 'devices.yaml'
+
+def load_devices():
+    """
+    Load devices from YAML configuration file
+    """
+    try:
+        if os.path.exists(CONFIG_FILE):
+            with open(CONFIG_FILE, 'r') as f:
+                data = yaml.safe_load(f) or {}
+                return data.get('devices', {})
+        else:
+            # Create default config if file doesn't exist
+            default_devices = {
+                "HARITH_PC": {
+                    "mac": "DE:5E:D3:93:DF:F5",
+                    "ip": "192.168.0.18",
+                    "port": 9,
+                    "subnet": "255.255.255.0"
+                }
+            }
+            save_devices(default_devices)
+            return default_devices
+    except Exception as e:
+        print(f"❌ Error loading devices: {e}")
+        # Return default device as fallback
+        return {
+            "HARITH_PC": {
+                "mac": "DE:5E:D3:93:DF:F5",
+                "ip": "192.168.0.18",
+                "port": 9,
+                "subnet": "255.255.255.0"
+            }
+        }
+
+def save_devices(devices):
+    """
+    Save devices to YAML configuration file
+    """
+    try:
+        config_data = {
+            'devices': devices,
+            'version': '1.0',
+            'created_by': 'WoLow Wake-on-LAN App'
+        }
+        
+        with open(CONFIG_FILE, 'w') as f:
+            yaml.dump(config_data, f, default_flow_style=False, indent=2)
+        
+        print(f"✅ Devices saved to {CONFIG_FILE}")
+        return True
+    except Exception as e:
+        print(f"❌ Error saving devices: {e}")
+        return False
+
+# Load devices on startup
+devices_config = load_devices()
 
 def send_magic_packet(mac_address, ip_address, port=9):
     """
@@ -95,16 +156,26 @@ def wake_device():
     Handle Wake-on-LAN requests
     """
     try:
+        global devices_config
         data = request.get_json()
         
         if not data:
             return jsonify({'error': 'No JSON data provided'}), 400
         
         # Extract parameters
-        mac_address = data.get('mac')
-        ip_address = data.get('ip')
-        port = data.get('port', 9)
         device_name = data.get('device_name', 'Unknown Device')
+        
+        # Check if we should use device from config or provided parameters
+        if device_name in devices_config:
+            device = devices_config[device_name]
+            mac_address = device['mac']
+            ip_address = device['ip']
+            port = device['port']
+        else:
+            # Fall back to provided parameters
+            mac_address = data.get('mac')
+            ip_address = data.get('ip')
+            port = data.get('port', 9)
         
         # Validate required parameters
         if not mac_address:
@@ -134,18 +205,146 @@ def wake_device():
 @app.route('/devices', methods=['GET'])
 def get_devices():
     """
-    Get list of configured devices (for future expansion)
+    Get list of configured devices
     """
-    # This could be expanded to read from a config file or database
-    devices = {
-        "HARITH'S PC": {
-            "mac": "DE:5E:D3:93:DF:F5",
-            "ip": "192.168.0.18",
-            "port": 9,
-            "subnet": "255.255.255.0"
+    global devices_config
+    devices_config = load_devices()  # Reload from file
+    return jsonify(devices_config)
+
+@app.route('/devices', methods=['POST'])
+def add_device():
+    """
+    Add a new device to the configuration
+    """
+    try:
+        global devices_config
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+        
+        # Extract device information
+        device_name = data.get('name')
+        mac_address = data.get('mac')
+        ip_address = data.get('ip')
+        port = data.get('port', 9)
+        subnet = data.get('subnet', '255.255.255.0')
+        
+        # Validate required fields
+        if not device_name:
+            return jsonify({'error': 'Device name is required'}), 400
+        if not mac_address:
+            return jsonify({'error': 'MAC address is required'}), 400
+        if not ip_address:
+            return jsonify({'error': 'IP address is required'}), 400
+        
+        # Add device to configuration
+        devices_config[device_name] = {
+            'mac': mac_address,
+            'ip': ip_address,
+            'port': port,
+            'subnet': subnet
         }
-    }
-    return jsonify(devices)
+        
+        # Save to file
+        if save_devices(devices_config):
+            print(f"✅ Added device: {device_name} ({mac_address})")
+            return jsonify({
+                'success': True,
+                'message': f'Device "{device_name}" added successfully',
+                'device': devices_config[device_name]
+            })
+        else:
+            return jsonify({'error': 'Failed to save device configuration'}), 500
+            
+    except Exception as e:
+        print(f"❌ Error adding device: {str(e)}")
+        return jsonify({'error': f'Server error: {str(e)}'}), 500
+
+@app.route('/devices/<device_name>', methods=['PUT'])
+def update_device(device_name):
+    """
+    Update an existing device in the configuration
+    """
+    try:
+        global devices_config
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+        
+        # Check if device exists
+        if device_name not in devices_config:
+            return jsonify({'error': 'Device not found'}), 404
+        
+        # Extract device information
+        new_name = data.get('name', device_name)
+        mac_address = data.get('mac')
+        ip_address = data.get('ip')
+        port = data.get('port', 9)
+        subnet = data.get('subnet', '255.255.255.0')
+        
+        # Validate required fields
+        if not mac_address:
+            return jsonify({'error': 'MAC address is required'}), 400
+        if not ip_address:
+            return jsonify({'error': 'IP address is required'}), 400
+        
+        # Remove old device if name changed
+        if new_name != device_name:
+            del devices_config[device_name]
+        
+        # Update device in configuration
+        devices_config[new_name] = {
+            'mac': mac_address,
+            'ip': ip_address,
+            'port': port,
+            'subnet': subnet
+        }
+        
+        # Save to file
+        if save_devices(devices_config):
+            print(f"✅ Updated device: {new_name} ({mac_address})")
+            return jsonify({
+                'success': True,
+                'message': f'Device "{new_name}" updated successfully',
+                'device': devices_config[new_name]
+            })
+        else:
+            return jsonify({'error': 'Failed to save device configuration'}), 500
+            
+    except Exception as e:
+        print(f"❌ Error updating device: {str(e)}")
+        return jsonify({'error': f'Server error: {str(e)}'}), 500
+
+@app.route('/devices/<device_name>', methods=['DELETE'])
+def delete_device(device_name):
+    """
+    Delete a device from the configuration
+    """
+    try:
+        global devices_config
+        
+        # Check if device exists
+        if device_name not in devices_config:
+            return jsonify({'error': 'Device not found'}), 404
+        
+        # Remove device
+        del devices_config[device_name]
+        
+        # Save to file
+        if save_devices(devices_config):
+            print(f"✅ Deleted device: {device_name}")
+            return jsonify({
+                'success': True,
+                'message': f'Device "{device_name}" deleted successfully'
+            })
+        else:
+            return jsonify({'error': 'Failed to save device configuration'}), 500
+            
+    except Exception as e:
+        print(f"❌ Error deleting device: {str(e)}")
+        return jsonify({'error': f'Server error: {str(e)}'}), 500
 
 @app.route('/health', methods=['GET'])
 def health_check():
@@ -164,18 +363,28 @@ if __name__ == '__main__':
     print("🔧 API endpoints:")
     print("   POST /wake - Send wake packet")
     print("   GET  /devices - List devices")
+    print("   POST /devices - Add device")
+    print("   PUT  /devices/<name> - Update device")
+    print("   DELETE /devices/<name> - Delete device")
     print("   GET  /health - Health check")
     print()
-    print("💻 Pre-configured device:")
-    print("   Name: HARITH'S PC")
-    print("   MAC:  DE:5E:D3:93:DF:F5")
-    print("   IP:   192.168.0.18")
-    print("   Port: 9")
+    print(f"📄 Configuration file: {CONFIG_FILE}")
+    print(f"📊 Loaded {len(devices_config)} device(s):")
+    for name, device in devices_config.items():
+        print(f"   • {name}: {device['mac']} ({device['ip']}:{device['port']})")
     print()
+    
+    # Check if PyYAML is installed
+    try:
+        import yaml
+        print("✅ PyYAML is available")
+    except ImportError:
+        print("❌ PyYAML not found. Install with: pip install PyYAML")
+        exit(1)
     
     # Run the Flask app
     app.run(
         host='0.0.0.0',  # Listen on all interfaces
         port=5000,
-        debug=False
+        debug=True
     )
