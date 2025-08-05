@@ -18,32 +18,22 @@ def load_devices():
     """
     try:
         if os.path.exists(CONFIG_FILE):
-            with open(CONFIG_FILE, 'r') as f:
+            with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
                 data = yaml.safe_load(f) or {}
                 return data.get('devices', {})
         else:
-            # Create default config if file doesn't exist
-            default_devices = {
-                "HARITH_PC": {
-                    "mac": "DE:5E:D3:93:DF:F5",
-                    "ip": "192.168.0.18",
-                    "port": 9,
-                    "subnet": "255.255.255.0"
-                }
+            # Create empty config if file doesn't exist
+            default_config = {
+                'devices': {},
+                'version': '1.0',
+                'created_by': 'WoLow Wake-on-LAN App'
             }
-            save_devices(default_devices)
-            return default_devices
+            with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+                yaml.dump(default_config, f, default_flow_style=False, indent=2)
+            return {}
     except Exception as e:
         print(f"❌ Error loading devices: {e}")
-        # Return default device as fallback
-        return {
-            "HARITH_PC": {
-                "mac": "DE:5E:D3:93:DF:F5",
-                "ip": "192.168.0.18",
-                "port": 9,
-                "subnet": "255.255.255.0"
-            }
-        }
+        return {}
 
 def save_devices(devices):
     """
@@ -56,7 +46,7 @@ def save_devices(devices):
             'created_by': 'WoLow Wake-on-LAN App'
         }
         
-        with open(CONFIG_FILE, 'w') as f:
+        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
             yaml.dump(config_data, f, default_flow_style=False, indent=2)
         
         print(f"✅ Devices saved to {CONFIG_FILE}")
@@ -105,9 +95,9 @@ def index():
     """
     Serve the main HTML page
     """
-    # Read the HTML file
+    # Read the HTML file with UTF-8 encoding
     try:
-        with open('index.html', 'r') as f:
+        with open('index.html', 'r', encoding='utf-8') as f:
             html_content = f.read()
         return html_content
     except FileNotFoundError:
@@ -382,9 +372,25 @@ if __name__ == '__main__':
         print("❌ PyYAML not found. Install with: pip install PyYAML")
         exit(1)
     
-    # Run the Flask app
+    # SOLUTION 1: Disable debug mode (Recommended for production)
+    print("🔧 Running in production mode (debug=False) to avoid /dev/shm issues")
     app.run(
         host='0.0.0.0',  # Listen on all interfaces
         port=5000,
-        debug=False
+        debug=False  # CHANGED: Disabled debug mode
     )
+    
+    # SOLUTION 2: If you need debug mode, use the alternative below instead:
+    # import tempfile
+    # import os
+    # 
+    # # Set alternative temp directory if /dev/shm is not available
+    # if not os.path.exists('/dev/shm'):
+    #     tempfile.tempdir = '/tmp'
+    # 
+    # app.run(
+    #     host='0.0.0.0',
+    #     port=5000,
+    #     debug=True,
+    #     use_reloader=False  # Disable reloader to avoid multiprocessing issues
+    # )
