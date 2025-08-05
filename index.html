@@ -516,17 +516,70 @@
     </div>
 
     <script>
-        // Default device configuration
-        const devices = {
-            "HARITH_PC": {
-                mac: "DE:5E:D3:93:DF:F5",
-                ip: "192.168.0.18",
-                port: 9,
-                subnet: "255.255.255.0"
-            }
-        };
-
+    <script>
+        // Device configuration - loaded from server
+        let devices = {};
         let selectedDevice = "HARITH_PC";
+        let editingDevice = null;
+
+        // Load devices from server on startup
+        async function loadDevices() {
+            try {
+                const response = await fetch('/devices');
+                if (response.ok) {
+                    devices = await response.json();
+                    
+                    // Set first device as selected if HARITH_PC doesn't exist
+                    const deviceNames = Object.keys(devices);
+                    if (deviceNames.length > 0) {
+                        if (!devices[selectedDevice]) {
+                            selectedDevice = deviceNames[0];
+                        }
+                        document.getElementById('selectedDeviceName').textContent = selectedDevice;
+                        document.getElementById('deviceName').textContent = selectedDevice;
+                    }
+                    
+                    updateDeviceList();
+                } else {
+                    showNotification('Failed to load devices from server', 'error');
+                }
+            } catch (error) {
+                showNotification('Error connecting to server: ' + error.message, 'error');
+            }
+        }
+
+        // Save device to server
+        async function saveDeviceToServer(deviceData, isUpdate = false, oldName = null) {
+            try {
+                let url = '/devices';
+                let method = 'POST';
+                
+                if (isUpdate && oldName) {
+                    url = `/devices/${encodeURIComponent(oldName)}`;
+                    method = 'PUT';
+                }
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(deviceData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    // Reload devices from server
+                    await loadDevices();
+                    return { success: true, message: result.message };
+                } else {
+                    return { success: false, message: result.error || 'Failed to save device' };
+                }
+            } catch (error) {
+                return { success: false, message: 'Network error: ' + error.message };
+            }
+        }
         let editingDevice = null;
 
         function openAddModal() {
@@ -604,7 +657,7 @@
         }
 
         // Handle add device form
-        document.getElementById('addDeviceForm').addEventListener('submit', function(e) {
+        document.getElementById('addDeviceForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const name = document.getElementById('addDeviceName').value.trim();
@@ -638,20 +691,30 @@
                 return;
             }
             
-            // Add device
-            devices[name] = { mac, ip, port, subnet: "255.255.255.0" };
-            updateDeviceList();
-            closeModal('addModal');
+            // Save device to server
+            const result = await saveDeviceToServer({
+                name: name,
+                mac: mac,
+                ip: ip,
+                port: port,
+                subnet: "255.255.255.0"
+            });
             
-            // Clear form
-            this.reset();
-            document.getElementById('addPort').value = '9';
-            
-            showNotification(`Device "${name}" added successfully`, 'success');
+            if (result.success) {
+                closeModal('addModal');
+                
+                // Clear form
+                this.reset();
+                document.getElementById('addPort').value = '9';
+                
+                showNotification(result.message, 'success');
+            } else {
+                showNotification(result.message, 'error');
+            }
         });
 
         // Handle edit device form
-        document.getElementById('editDeviceForm').addEventListener('submit', function(e) {
+        document.getElementById('editDeviceForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const name = document.getElementById('editDeviceName').value.trim();
@@ -679,22 +742,28 @@
                 return;
             }
             
-            // Remove old device if name changed
-            if (editingDevice && editingDevice !== name) {
-                delete devices[editingDevice];
+            // Save device to server
+            const result = await saveDeviceToServer({
+                name: name,
+                mac: mac,
+                ip: ip,
+                port: port,
+                subnet: "255.255.255.0"
+            }, true, editingDevice);
+            
+            if (result.success) {
+                // Update selected device if it was the one being edited
                 if (selectedDevice === editingDevice) {
                     selectedDevice = name;
                     document.getElementById('selectedDeviceName').textContent = name;
                     document.getElementById('deviceName').textContent = name;
                 }
+                
+                closeModal('editModal');
+                showNotification(result.message, 'success');
+            } else {
+                showNotification(result.message, 'error');
             }
-            
-            // Update device
-            devices[name] = { mac, ip, port, subnet: "255.255.255.0" };
-            updateDeviceList();
-            closeModal('editModal');
-            
-            showNotification(`Device "${name}" updated successfully`, 'success');
         });
 
         function showNotification(message, type = 'info') {
@@ -757,22 +826,8 @@
 
         // Add some interactivity to device selection
         document.addEventListener('DOMContentLoaded', function() {
-            const deviceItems = document.querySelectorAll('.device-item');
-            
-            deviceItems.forEach(item => {
-                item.addEventListener('click', function() {
-                    // Remove active class from all items
-                    deviceItems.forEach(i => i.classList.remove('active'));
-                    // Add active class to clicked item
-                    this.classList.add('active');
-                    
-                    // Update selected device (in a real app, you'd get this from the item data)
-                    const deviceName = this.querySelector('h3').textContent;
-                    selectedDevice = deviceName;
-                    document.getElementById('selectedDeviceName').textContent = deviceName;
-                    document.getElementById('deviceName').textContent = deviceName;
-                });
-            });
+            // Load devices from server when page loads
+            loadDevices();
         });
     </script>
 </body>
