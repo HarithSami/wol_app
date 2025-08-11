@@ -24,6 +24,9 @@
             padding: 15px 20px;
             text-align: center;
             backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
         .header h1 {
@@ -31,6 +34,82 @@
             font-size: 20px;
             font-weight: 600;
             margin: 0;
+            flex: 1;
+            text-align: center;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .refresh-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .refresh-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .refresh-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .refresh-btn.spinning .refresh-icon {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .auto-refresh-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+            font-size: 14px;
+        }
+
+        .auto-refresh-checkbox {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 3px;
+            background: transparent;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .auto-refresh-checkbox:checked {
+            background: rgba(255, 255, 255, 0.9);
+            border-color: rgba(255, 255, 255, 0.9);
+        }
+
+        .auto-refresh-checkbox:checked::after {
+            content: '✓';
+            position: absolute;
+            top: -2px;
+            left: 2px;
+            color: #667eea;
+            font-weight: bold;
+            font-size: 14px;
         }
 
         .main-container {
@@ -146,7 +225,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .status-label {
@@ -155,7 +234,54 @@
 
         .status-value {
             font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-online {
             color: #4CAF50;
+        }
+
+        .status-offline {
+            color: #f44336;
+        }
+
+        .status-unknown {
+            color: #ff9800;
+        }
+
+        .status-checking {
+            color: #2196F3;
+        }
+
+        .ping-time {
+            font-size: 12px;
+            color: #666;
+            background: rgba(76, 175, 80, 0.1);
+            padding: 2px 6px;
+            border-radius: 10px;
+        }
+
+        .ping-btn {
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            color: #667eea;
+            border-radius: 8px;
+            padding: 6px 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 12px;
+        }
+
+        .ping-btn:hover {
+            background: rgba(102, 126, 234, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .ping-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
         }
 
         .wake-button-container {
@@ -256,6 +382,46 @@
             border-radius: 10px;
         }
 
+        .device-info-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+        }
+
+        .device-status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .device-status-indicator.online {
+            background: #4CAF50;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+        }
+
+        .device-status-indicator.offline {
+            background: #f44336;
+            box-shadow: 0 0 10px rgba(244, 67, 54, 0.3);
+        }
+
+        .device-status-indicator.unknown {
+            background: #ff9800;
+            box-shadow: 0 0 10px rgba(255, 152, 0, 0.3);
+        }
+
+        .device-status-indicator.checking {
+            background: #2196F3;
+            animation: pulse-check 1.5s infinite;
+        }
+
+        @keyframes pulse-check {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.2); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
         .device-details h3 {
             font-size: 16px;
             font-weight: 600;
@@ -265,6 +431,15 @@
         .device-details p {
             color: #666;
             font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .device-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .edit-btn {
@@ -447,6 +622,18 @@
         }
 
         @media (max-width: 480px) {
+            .header {
+                flex-direction: column;
+                gap: 10px;
+                padding: 10px 15px;
+            }
+
+            .header-controls {
+                flex-direction: column;
+                gap: 10px;
+                width: 100%;
+            }
+
             .main-container {
                 padding: 15px;
             }
@@ -466,12 +653,33 @@
                 padding: 20px;
                 width: 95%;
             }
+
+            .device-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+                padding: 15px 0;
+            }
+
+            .device-actions {
+                align-self: flex-end;
+            }
         }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>WoLow</h1>
+        <div class="header-controls">
+            <button class="refresh-btn" id="refreshBtn" onclick="refreshAllDevices()">
+                <span class="refresh-icon">🔄</span>
+                <span>Refresh</span>
+            </button>
+            <div class="auto-refresh-container">
+                <input type="checkbox" class="auto-refresh-checkbox" id="autoRefreshCheck">
+                <label for="autoRefreshCheck">Auto refresh (5s)</label>
+            </div>
+        </div>
     </div>
 
     <div class="main-container">
@@ -490,8 +698,18 @@
             </div>
             
             <div class="status-row">
-                <span class="status-label">Status</span>
-                <span class="status-value" id="deviceStatus">Ready</span>
+                <span class="status-label">Connection</span>
+                <div class="status-value" id="deviceStatus">
+                    <span class="status-unknown">Unknown</span>
+                </div>
+            </div>
+
+            <div class="status-row">
+                <span class="status-label">IP Address</span>
+                <div class="status-value">
+                    <span id="deviceIP">-</span>
+                    <button class="ping-btn" id="pingBtn" onclick="pingSelectedDevice()">Ping</button>
+                </div>
             </div>
 
             <div class="wake-button-container">
@@ -581,10 +799,12 @@
     </div>
 
     <script>
-        // Device configuration - loaded from server
+        // Device configuration and status tracking
         let devices = {};
         let selectedDevice = '';
         let editingDevice = null;
+        let autoRefreshInterval = null;
+        let isRefreshing = false;
 
         // Load devices from server on startup
         async function loadDevices() {
@@ -599,14 +819,12 @@
                     if (deviceNames.length > 0) {
                         if (!selectedDevice || !devices[selectedDevice]) {
                             selectedDevice = deviceNames[0];
-                            document.getElementById('selectedDeviceName').textContent = selectedDevice;
-                            document.getElementById('deviceName').textContent = selectedDevice;
+                            updateSelectedDeviceDisplay();
                         }
                     } else {
                         // No devices available
                         selectedDevice = '';
-                        document.getElementById('selectedDeviceName').textContent = 'No Devices';
-                        document.getElementById('deviceName').textContent = 'No Devices';
+                        updateSelectedDeviceDisplay();
                     }
                     
                     updateDeviceList();
@@ -628,6 +846,132 @@
             }
         }
 
+        // Update the selected device display
+        function updateSelectedDeviceDisplay() {
+            const device = selectedDevice && devices[selectedDevice] ? devices[selectedDevice] : null;
+            const editBtn = document.getElementById('editBtn');
+            
+            if (device) {
+                document.getElementById('selectedDeviceName').textContent = selectedDevice;
+                document.getElementById('deviceName').textContent = selectedDevice;
+                document.getElementById('deviceIP').textContent = device.ip;
+                updateDeviceStatus(selectedDevice, device.status);
+                if (editBtn) editBtn.style.display = 'block';
+            } else {
+                document.getElementById('selectedDeviceName').textContent = 'No Devices';
+                document.getElementById('deviceName').textContent = 'No Devices';
+                document.getElementById('deviceIP').textContent = '-';
+                document.getElementById('deviceStatus').innerHTML = '<span class="status-unknown">Unknown</span>';
+                if (editBtn) editBtn.style.display = 'none';
+            }
+        }
+
+        // Update device status display
+        function updateDeviceStatus(deviceName, status) {
+            const statusElement = document.getElementById('deviceStatus');
+            
+            if (!status) {
+                statusElement.innerHTML = '<span class="status-unknown">Unknown</span>';
+                return;
+            }
+
+            if (status.online === true) {
+                const pingTime = status.response_time ? `<span class="ping-time">${status.response_time}ms</span>` : '';
+                statusElement.innerHTML = `<span class="status-online">Online</span> ${pingTime}`;
+            } else if (status.online === false) {
+                statusElement.innerHTML = '<span class="status-offline">Offline</span>';
+            } else {
+                statusElement.innerHTML = '<span class="status-unknown">Unknown</span>';
+            }
+        }
+
+        // Refresh all devices status
+        async function refreshAllDevices() {
+            if (isRefreshing) return;
+            
+            const refreshBtn = document.getElementById('refreshBtn');
+            const refreshIcon = refreshBtn.querySelector('.refresh-icon');
+            
+            isRefreshing = true;
+            refreshBtn.disabled = true;
+            refreshIcon.classList.add('spinning');
+            
+            // Update all device indicators to checking state
+            document.querySelectorAll('.device-status-indicator').forEach(indicator => {
+                indicator.className = 'device-status-indicator checking';
+            });
+
+            try {
+                const response = await fetch('/devices/check', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                });
+
+                if (response.ok) {
+                    // Wait a moment for the server to complete the checks
+                    setTimeout(async () => {
+                        await loadDevices(); // Reload with updated status
+                        showNotification('Device status refreshed', 'success');
+                    }, 1500);
+                } else {
+                    showNotification('Failed to refresh device status', 'error');
+                }
+            } catch (error) {
+                console.error('Error refreshing devices:', error);
+                showNotification('Error refreshing devices: ' + error.message, 'error');
+            } finally {
+                setTimeout(() => {
+                    isRefreshing = false;
+                    refreshBtn.disabled = false;
+                    refreshIcon.classList.remove('spinning');
+                }, 1500);
+            }
+        }
+
+        // Ping selected device
+        async function pingSelectedDevice() {
+            if (!selectedDevice || !devices[selectedDevice]) {
+                showNotification('No device selected', 'error');
+                return;
+            }
+
+            const pingBtn = document.getElementById('pingBtn');
+            const statusElement = document.getElementById('deviceStatus');
+            
+            pingBtn.disabled = true;
+            statusElement.innerHTML = '<span class="status-checking">Checking...</span>';
+
+            try {
+                const response = await fetch(`/devices/ping/${encodeURIComponent(selectedDevice)}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    // Update the device status in our local data
+                    if (devices[selectedDevice]) {
+                        devices[selectedDevice].status = result.status;
+                        updateDeviceStatus(selectedDevice, result.status);
+                        updateDeviceList(); // Refresh the list to show updated status indicators
+                    }
+                    
+                    const statusText = result.status.online ? 'Device is online' : 'Device is offline';
+                    showNotification(statusText, result.status.online ? 'success' : 'error');
+                } else {
+                    showNotification(result.error || 'Failed to ping device', 'error');
+                    updateDeviceStatus(selectedDevice, null);
+                }
+            } catch (error) {
+                console.error('Error pinging device:', error);
+                showNotification('Network error: ' + error.message, 'error');
+                updateDeviceStatus(selectedDevice, null);
+            } finally {
+                pingBtn.disabled = false;
+            }
+        }
+
         // Wake selected device
         async function wakeSelectedDevice() {
             if (!selectedDevice || !devices[selectedDevice]) {
@@ -642,7 +986,6 @@
             powerBtn.disabled = true;
             wakeBtn.disabled = true;
             powerBtn.classList.add('sending');
-            document.getElementById('deviceStatus').textContent = 'Sending...';
 
             try {
                 const response = await fetch('/wake', {
@@ -659,26 +1002,43 @@
 
                 if (response.ok && result.success) {
                     showNotification(result.message, 'success');
-                    document.getElementById('deviceStatus').textContent = 'Packet Sent';
+                    
+                    // Automatically ping the device after a short delay to check if it woke up
+                    setTimeout(() => {
+                        pingSelectedDevice();
+                    }, 3000);
                 } else {
                     showNotification(result.error || 'Failed to wake device', 'error');
-                    document.getElementById('deviceStatus').textContent = 'Error';
                 }
             } catch (error) {
                 console.error('Error waking device:', error);
                 showNotification('Network error: ' + error.message, 'error');
-                document.getElementById('deviceStatus').textContent = 'Error';
             } finally {
                 // Re-enable buttons and remove sending state
                 powerBtn.disabled = false;
                 wakeBtn.disabled = false;
                 powerBtn.classList.remove('sending');
-                
-                // Reset status after a delay
-                setTimeout(() => {
-                    document.getElementById('deviceStatus').textContent = 'Ready';
-                }, 2000);
             }
+        }
+
+        // Auto-refresh functionality
+        function setupAutoRefresh() {
+            const checkbox = document.getElementById('autoRefreshCheck');
+            
+            checkbox.addEventListener('change', function() {
+                if (this.checked) {
+                    // Start auto-refresh every 5 seconds
+                    autoRefreshInterval = setInterval(refreshAllDevices, 5000);
+                    console.log('Auto-refresh enabled (5s interval)');
+                } else {
+                    // Stop auto-refresh
+                    if (autoRefreshInterval) {
+                        clearInterval(autoRefreshInterval);
+                        autoRefreshInterval = null;
+                    }
+                    console.log('Auto-refresh disabled');
+                }
+            });
         }
 
         // Save device to server
@@ -780,6 +1140,23 @@
             }
         }
 
+        function getStatusIndicatorClass(status) {
+            if (!status || status.online === null || status.online === undefined) {
+                return 'unknown';
+            }
+            return status.online ? 'online' : 'offline';
+        }
+
+        function getStatusText(status) {
+            if (!status || status.online === null || status.online === undefined) {
+                return 'Unknown';
+            }
+            if (status.online) {
+                return status.response_time ? `Online (${status.response_time}ms)` : 'Online';
+            }
+            return 'Offline';
+        }
+
         function updateDeviceList() {
             const deviceList = document.getElementById('deviceList');
             const deviceNames = Object.keys(devices);
@@ -797,15 +1174,9 @@
                 deviceList.appendChild(li);
                 
                 // Update UI to show no devices
-                document.getElementById('selectedDeviceName').textContent = 'No Devices';
-                document.getElementById('deviceName').textContent = 'No Devices';
-                selectedDevice = '';
-                if (editBtn) editBtn.style.display = 'none';
+                updateSelectedDeviceDisplay();
                 return;
             }
-            
-            // Show edit button when devices are available
-            if (editBtn) editBtn.style.display = 'block';
             
             deviceNames.forEach(deviceName => {
                 const device = devices[deviceName];
@@ -815,12 +1186,20 @@
                     li.classList.add('active');
                 }
                 
+                const statusClass = getStatusIndicatorClass(device.status);
+                const statusText = getStatusText(device.status);
+                
                 li.innerHTML = `
-                    <div class="device-details">
-                        <h3>${deviceName}</h3>
-                        <p>${device.ip}</p>
+                    <div class="device-info-left">
+                        <div class="device-status-indicator ${statusClass}"></div>
+                        <div class="device-details">
+                            <h3>${deviceName}</h3>
+                            <p>${device.ip} • ${statusText}</p>
+                        </div>
                     </div>
-                    <button class="edit-btn" onclick="event.stopPropagation(); openEditModal('${deviceName.replace(/'/g, '\\\'')}')" title="Edit Device">✏️</button>
+                    <div class="device-actions">
+                        <button class="edit-btn" onclick="event.stopPropagation(); openEditModal('${deviceName.replace(/'/g, '\\\'')}')" title="Edit Device">✏️</button>
+                    </div>
                 `;
                 
                 li.addEventListener('click', function(e) {
@@ -838,8 +1217,7 @@
                     
                     // Update selected device
                     selectedDevice = deviceName;
-                    document.getElementById('selectedDeviceName').textContent = deviceName;
-                    document.getElementById('deviceName').textContent = deviceName;
+                    updateSelectedDeviceDisplay();
                 });
                 
                 deviceList.appendChild(li);
@@ -854,6 +1232,68 @@
             const mac = document.getElementById('addMacAddress').value.trim().toUpperCase();
             const ip = document.getElementById('addIpAddress').value.trim();
             const port = parseInt(document.getElementById('addPort').value);
+            
+            // Validate inputs
+            if (!name || !mac || !ip || !port) {
+                showNotification('Please fill in all fields', 'error');
+                return;
+            }
+            
+            // Validate MAC address format
+            const macRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
+            if (!macRegex.test(mac)) {
+                showNotification('Invalid MAC address format (use XX:XX:XX:XX:XX:XX)', 'error');
+                return;
+            }
+            
+            // Validate IP address format
+            const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+            if (!ipRegex.test(ip)) {
+                showNotification('Invalid IP address format', 'error');
+                return;
+            }
+            
+            // Validate port range
+            if (port < 1 || port > 65535) {
+                showNotification('Port must be between 1 and 65535', 'error');
+                return;
+            }
+            
+            // Check if device name already exists
+            if (devices[name]) {
+                showNotification('Device name already exists', 'error');
+                return;
+            }
+            
+            // Save device to server
+            const result = await saveDeviceToServer({
+                name: name,
+                mac: mac,
+                ip: ip,
+                port: port,
+                subnet: "255.255.255.0"
+            });
+            
+            if (result.success) {
+                // Select the newly added device
+                selectedDevice = name;
+                updateSelectedDeviceDisplay();
+                
+                closeModal('addModal');
+                showNotification(result.message, 'success');
+            } else {
+                showNotification(result.message, 'error');
+            }
+        });
+
+        // Handle edit device form
+        document.getElementById('editDeviceForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('editDeviceName').value.trim();
+            const mac = document.getElementById('editMacAddress').value.trim().toUpperCase();
+            const ip = document.getElementById('editIpAddress').value.trim();
+            const port = parseInt(document.getElementById('editPort').value);
             
             // Validate inputs
             if (!name || !mac || !ip || !port) {
@@ -900,8 +1340,7 @@
                 // Update selected device if it was the one being edited
                 if (selectedDevice === editingDevice) {
                     selectedDevice = name;
-                    document.getElementById('selectedDeviceName').textContent = name;
-                    document.getElementById('deviceName').textContent = name;
+                    updateSelectedDeviceDisplay();
                 }
                 
                 closeModal('editModal');
@@ -930,13 +1369,10 @@
                     const remainingDevices = Object.keys(devices).filter(name => name !== editingDevice);
                     if (remainingDevices.length > 0) {
                         selectedDevice = remainingDevices[0];
-                        document.getElementById('selectedDeviceName').textContent = selectedDevice;
-                        document.getElementById('deviceName').textContent = selectedDevice;
                     } else {
                         selectedDevice = '';
-                        document.getElementById('selectedDeviceName').textContent = 'No Devices';
-                        document.getElementById('deviceName').textContent = 'No Devices';
                     }
+                    updateSelectedDeviceDisplay();
                 }
                 
                 closeModal('editModal');
@@ -959,8 +1395,16 @@
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM loaded, initializing app...');
+            setupAutoRefresh();
             loadDevices();
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
         });
     </script>
 </body>
-</html> 
+</html>
