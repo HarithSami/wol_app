@@ -5,6 +5,10 @@ import socket
 import struct
 import os
 import yaml
+import subprocess
+import platform
+import asyncio
+import concurrent.futures
 from pathlib import Path
 
 app = Flask(__name__)
@@ -57,6 +61,79 @@ def save_devices(devices):
 
 # Load devices on startup
 devices_config = load_devices()
+
+def ping_device(ip_address, timeout=3):
+    """
+    Ping a device to check if it's online
+    Returns (is_online: bool, response_time: float or None)
+    """
+    try:
+        # Determine ping command based on operating system
+        param = '-n' if platform.system().lower() == 'windows' else '-c'
+        timeout_param = '-W' if platform.system().lower() == 'windows' else '-W'
+        
+        # Build ping command
+        command = ['ping', param, '1', timeout_param, str(timeout * 1000 if platform.system().lower() == 'windows' else timeout), ip_address]
+        
+        # Execute ping command
+        result = subprocess.run(command, capture_output=True, text=True, timeout=timeout + 1)
+        
+        if result.returncode == 0:
+            # Parse response time from output
+            output = result.stdout.lower()
+            if 'time=' in output:
+                try:
+                    # Extract time value (works for both Windows and Unix)
+                    time_part = output.split('time=')[1].split()[0]
+                    response_time = float(time_part.replace('ms', '').replace('<', ''))
+                    return True, response_time
+                except:
+                    return True, None
+            return True, None
+        else:
+            return False, None
+            
+    except subprocess.TimeoutExpired:
+        return False, None
+    except Exception as e:
+        print(f"❌ Error pinging {ip_address}: {e}")
+        return False, None
+
+def ping_multiple_devices(devices_dict):
+    """
+    Ping multiple devices concurrently
+    Returns dictionary with device names and their status
+    """
+    results = {}
+    
+    # Use ThreadPoolExecutor for concurrent pings
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        # Submit ping tasks for all devices
+        future_to_device = {
+            executor.submit(ping_device, device_info['ip']): device_name 
+            for device_name, device_info in devices_dict.items()
+        }
+        
+        # Collect results
+        for future in concurrent.futures.as_completed(future_to_device):
+            device_name = future_to_device[future]
+            try:
+                is_online, response_time = future.result()
+                results[device_name] = {
+                    'online': is_online,
+                    'response_time': response_time,
+                    'last_checked': None  # Will be set by frontend
+                }
+            except Exception as e:
+                print(f"❌ Error checking {device_name}: {e}")
+                results[device_name] = {
+                    'online': False,
+                    'response_time': None,
+                    'last_checked': None,
+                    'error': str(e)
+                }
+    
+    return results
 
 def send_magic_packet(mac_address, ip_address, port=9):
     """
@@ -200,6 +277,71 @@ def get_devices():
     global devices_config
     devices_config = load_devices()  # Reload from file
     return jsonify(devices_config)
+
+@app.route('/devices/status', methods=['GET'])
+def get_devices_status():
+    """
+    Check online status of all devices via ping
+    """
+    try:
+        global devices_config
+        devices_config = load_devices()  # Reload from file
+        
+        if not devices_config:
+            return jsonify({})
+        
+        print(f"🔍 Checking status of {len(devices_config)} device(s)...")
+        
+        # Ping all devices concurrently
+        status_results = ping_multiple_devices(devices_config)
+        
+        # Log results
+        for device_name, status in status_results.items():
+            status_emoji = "🟢" if status['online'] else "🔴"
+            response_time = f" ({status['response_time']:.1f}ms)" if status['response_time'] else ""
+            print(f"   {status_emoji} {device_name}: {'Online' if status['online'] else 'Offline'}{response_time}")
+        
+        return jsonify(status_results)
+        
+    except Exception as e:
+        print(f"❌ Error checking device status: {str(e)}")
+        return jsonify({'error': f'Server error: {str(e)}'}), 500
+
+@app.route('/devices/<device_name>/status', methods=['GET'])
+def get_device_status(device_name):
+    """
+    Check online status of a specific device via ping
+    """
+    try:
+        global devices_config
+        devices_config = load_devices()  # Reload from file
+        
+        if device_name not in devices_config:
+            return jsonify({'error': 'Device not found'}), 404
+        
+        device = devices_config[device_name]
+        ip_address = device['ip']
+        
+        print(f"🔍 Checking status of {device_name} ({ip_address})...")
+        
+        # Ping the device
+        is_online, response_time = ping_device(ip_address)
+        
+        result = {
+            'online': is_online,
+            'response_time': response_time,
+            'ip_address': ip_address
+        }
+        
+        status_emoji = "🟢" if is_online else "🔴"
+        response_time_str = f" ({response_time:.1f}ms)" if response_time else ""
+        print(f"   {status_emoji} {device_name}: {'Online' if is_online else 'Offline'}{response_time_str}")
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        print(f"❌ Error checking device status: {str(e)}")
+        return jsonify({'error': f'Server error: {str(e)}'}), 500
 
 @app.route('/devices', methods=['POST'])
 def add_device():
@@ -348,11 +490,13 @@ def health_check():
     })
 
 if __name__ == '__main__':
-    print("🚀 Starting Wake-on-LAN Server...")
+    print("🚀 Starting Wake-on-LAN Server with Ping Status...")
     print("📱 Access the web interface at: http://localhost:5000")
     print("🔧 API endpoints:")
     print("   POST /wake - Send wake packet")
     print("   GET  /devices - List devices")
+    print("   GET  /devices/status - Check all devices status")
+    print("   GET  /devices/<name>/status - Check specific device status")
     print("   POST /devices - Add device")
     print("   PUT  /devices/<name> - Update device")
     print("   DELETE /devices/<name> - Delete device")
@@ -379,18 +523,3 @@ if __name__ == '__main__':
         port=5000,
         debug=False  # CHANGED: Disabled debug mode
     )
-    
-    # SOLUTION 2: If you need debug mode, use the alternative below instead:
-    # import tempfile
-    # import os
-    # 
-    # # Set alternative temp directory if /dev/shm is not available
-    # if not os.path.exists('/dev/shm'):
-    #     tempfile.tempdir = '/tmp'
-    # 
-    # app.run(
-    #     host='0.0.0.0',
-    #     port=5000,
-    #     debug=True,
-    #     use_reloader=False  # Disable reloader to avoid multiprocessing issues
-    # )
