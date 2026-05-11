@@ -1,0 +1,32 @@
+🔍 Checking device status...
+  🟢 MyPC: 192.168.0.10 (31.5ms)
+✅ Status check completed for 1 devices
+🚀 Starting Wake-on-LAN Server with Ping Support...
+📱 Access the web interface at: http://localhost:5000
+🔧 API endpoints:
+   POST /wake - Send wake packet
+   GET  /devices - List devices with status
+   POST /devices - Add device
+   PUT  /devices/<name> - Update device
+   DELETE /devices/<name> - Delete device
+   GET  /devices/status - Get all device status
+   POST /devices/check - Refresh all device status
+   POST /devices/ping/<name> - Ping specific device
+   GET  /health - Health check
+
+📄 Configuration file: devices.yaml
+📊 Loaded 1 device(s):
+   • MyPC: D8:5E:D3:93:DF:F5 (192.168.0.10:9) (🟢 31.5ms)
+
+✅ PyYAML is available
+🔧 Running in production mode (debug=False) to avoid /dev/shm issues
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.0.50:5000
+[33mPress CTRL+C to quit[0m
+192.168.0.10 - - [20/Apr/2026 02:56:44] "GET / HTTP/1.1" 200 -
+192.168.0.10 - - [20/Apr/2026 02:56:44] "GET /devices HTTP/1.1" 200 -
+192.168.0.10 - - [20/Apr/2026 02:56:44] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
