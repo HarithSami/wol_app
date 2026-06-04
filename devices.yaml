@@ -1,0 +1,11 @@
+devices:
+  # Friendly name of the device
+  ExampleDevice:
+    # MAC address of the device (format: 00:00:00:00:00:00)
+    mac: AA:BB:CC:DD:EE:FF
+    # IP address of the device (optional, for reference)
+    ip: 192.168.1.50
+    # WOL port (usually 7 or 9)
+    port: 9
+    # Subnet mask (optional, usually 255.255.255.0)
+    subnet: 255.255.255.0
