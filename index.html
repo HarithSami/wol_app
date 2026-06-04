@@ -5,45 +5,105 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wake-on-LAN</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #121212; color: #ffffff; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .container { text-align: center; background: #1e1e1e; padding: 40px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); width: 90%; max-width: 400px; }
-        h1 { margin-top: 0; font-size: 1.5rem; color: #e0e0e0; }
-        .device { margin-bottom: 20px; font-size: 1.2rem; color: #aaaaaa; }
-        button { background-color: #007bff; color: white; border: none; padding: 16px 32px; font-size: 1.2rem; border-radius: 8px; cursor: pointer; transition: background-color 0.2s; width: 100%; box-sizing: border-box; }
-        button:hover { background-color: #0056b3; }
-        button:active { background-color: #004085; transform: scale(0.98); }
-        .status { margin-top: 20px; min-height: 24px; font-size: 0.9rem; color: #4caf50; }
-        .error { color: #f44336; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #121212; color: #ffffff; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+        .container { text-align: center; background: #1e1e1e; padding: 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); width: 100%; max-width: 450px; }
+        h1 { margin: 0 0 25px 0; font-size: 1.6rem; color: #e0e0e0; }
+        .device-card { background: #2a2a2a; border-radius: 12px; padding: 20px; margin-bottom: 15px; display: flex; flex-direction: column; align-items: stretch; border: 1px solid #333; transition: transform 0.1s; }
+        .device-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .device-name { font-weight: 600; font-size: 1.1rem; }
+        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; text-transform: uppercase; font-weight: bold; }
+        .status-online { background: #2e7d32; color: #e8f5e9; }
+        .status-offline { background: #c62828; color: #ffebee; }
+        .status-checking { background: #444; color: #bbb; }
+        button { background-color: #007bff; color: white; border: none; padding: 14px; font-size: 1rem; border-radius: 8px; cursor: pointer; transition: background-color 0.2s, opacity 0.2s; width: 100%; }
+        button:hover:not(:disabled) { background-color: #0056b3; }
+        button:active:not(:disabled) { background-color: #004085; transform: scale(0.98); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        #message { margin-top: 20px; font-size: 0.9rem; min-height: 1.2rem; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Wake-on-LAN</h1>
-        <div class="device">MyPC</div>
-        <button id="wakeBtn">Wake Up</button>
-        <div id="status" class="status"></div>
+        <div id="deviceList"></div>
+        <div id="message"></div>
     </div>
     <script>
-        document.getElementById('wakeBtn').addEventListener('click', async () => {
-            const statusEl = document.getElementById('status');
-            const btn = document.getElementById('wakeBtn');
-            btn.disabled = true;
-            btn.style.opacity = '0.7';
-            statusEl.textContent = 'Sending magic packet...';
-            statusEl.className = 'status';
+        const messageEl = document.getElementById('message');
+        
+        async function fetchDevices() {
             try {
-                const response = await fetch('/wake', { method: 'POST' });
-                if (response.ok) {
-                    statusEl.textContent = 'Magic packet sent successfully!';
-                } else {
-                    throw new Error('Server error');
-                }
+                const res = await fetch('/api/devices');
+                const devices = await res.json();
+                renderDevices(devices);
             } catch (err) {
-                statusEl.textContent = 'Failed to send packet.';
-                statusEl.className = 'status error';
+                messageEl.textContent = 'Failed to load devices.';
             }
-            setTimeout(() => { btn.disabled = false; btn.style.opacity = '1'; }, 2000);
-        });
+        }
+
+        function renderDevices(devices) {
+            const list = document.getElementById('deviceList');
+            list.innerHTML = '';
+            if (devices.length === 0) {
+                list.innerHTML = '<div style="color: #888; padding: 20px;">No devices configured in config.json</div>';
+                return;
+            }
+            devices.forEach(device => {
+                const card = document.createElement('div');
+                card.className = 'device-card';
+                card.innerHTML = `
+                    <div class="device-info">
+                        <span class="device-name">${device.name}</span>
+                        <span id="status-${device.mac}" class="status-badge status-checking">Checking...</span>
+                    </div>
+                    <button onclick="wakeDevice('${device.mac}', '${device.name}')">Wake Up</button>
+                `;
+                list.appendChild(card);
+                updateStatus(device.mac, device.ip);
+            });
+        }
+
+        async function updateStatus(mac, ip) {
+            const badge = document.getElementById(`status-${mac}`);
+            if (!ip) {
+                badge.textContent = 'No IP';
+                badge.className = 'status-badge status-checking';
+                return;
+            }
+            try {
+                const res = await fetch(`/api/status?ip=${ip}`);
+                const data = await res.json();
+                badge.textContent = data.online ? 'Online' : 'Offline';
+                badge.className = `status-badge ${data.online ? 'status-online' : 'status-offline'}`;
+            } catch {
+                badge.textContent = 'Error';
+            }
+        }
+
+        async function wakeDevice(mac, name) {
+            messageEl.textContent = `Sending magic packet to ${name}...`;
+            messageEl.style.color = '#fff';
+            try {
+                const res = await fetch('/wake', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mac })
+                });
+                if (res.ok) {
+                    messageEl.textContent = `Magic packet sent to ${name}!`;
+                    messageEl.style.color = '#4caf50';
+                } else {
+                    throw new Error();
+                }
+            } catch {
+                messageEl.textContent = `Failed to wake ${name}.`;
+                messageEl.style.color = '#f44336';
+            }
+            setTimeout(() => { messageEl.textContent = ''; }, 3000);
+        }
+
+        fetchDevices();
+        setInterval(fetchDevices, 10000); // Refresh status every 10s
     </script>
 </body>
 </html>
